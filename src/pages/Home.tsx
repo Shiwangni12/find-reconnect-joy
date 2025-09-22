@@ -5,57 +5,23 @@ import ItemCard from "@/components/ItemCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ArrowRight } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
+import { useItems } from '@/hooks/useItems';
 import heroImage from "@/assets/hero-image.jpg";
-
-// Mock data for demonstration
-const mockItems = [
-  {
-    id: "1",
-    title: "iPhone 14 Pro",
-    description: "Black iPhone 14 Pro lost at Central Park near the fountain",
-    category: "Electronics",
-    location: "Central Park, NYC",
-    date: "2 days ago",
-    image: "/placeholder.svg",
-    type: "lost" as const,
-  },
-  {
-    id: "2", 
-    title: "Blue Wallet",
-    description: "Found a blue leather wallet with ID cards near Starbucks",
-    category: "Personal Items",
-    location: "Downtown Seattle",
-    date: "1 day ago",
-    image: "/placeholder.svg",
-    type: "found" as const,
-  },
-  {
-    id: "3",
-    title: "Golden Retriever",
-    description: "Lost golden retriever named Max, very friendly",
-    category: "Pets",
-    location: "Brooklyn Heights",
-    date: "3 hours ago", 
-    image: "/placeholder.svg",
-    type: "lost" as const,
-  },
-  {
-    id: "4",
-    title: "Car Keys",
-    description: "Found Honda car keys with red keychain",
-    category: "Keys",
-    location: "University Campus",
-    date: "5 hours ago",
-    image: "/placeholder.svg",
-    type: "found" as const,
-  },
-];
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
+  const { items: allItems, loading } = useItems();
 
-  const lostItems = mockItems.filter(item => item.type === "lost");
-  const foundItems = mockItems.filter(item => item.type === "found");
+  // Filter items based on search query
+  const filteredItems = allItems.filter(item =>
+    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const lostItems = filteredItems.filter(item => item.type === "lost").slice(0, 4);
+  const foundItems = filteredItems.filter(item => item.type === "found").slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,10 +67,10 @@ const Home = () => {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button variant="hero" size="lg" asChild>
-                <Link to="/post-item">Post Lost Item</Link>
+                <Link to={user ? "/post-item" : "/login"}>Post Lost Item</Link>
               </Button>
               <Button variant="success" size="lg" asChild>
-                <Link to="/post-item">Post Found Item</Link>
+                <Link to={user ? "/post-item" : "/login"}>Post Found Item</Link>
               </Button>
             </div>
           </div>
@@ -130,11 +96,30 @@ const Home = () => {
               </Button>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {lostItems.map((item) => (
-                <ItemCard key={item.id} {...item} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-muted h-48 rounded-lg mb-4"></div>
+                    <div className="bg-muted h-4 rounded mb-2"></div>
+                    <div className="bg-muted h-4 rounded w-2/3"></div>
+                  </div>
+                ))}
+              </div>
+            ) : lostItems.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {lostItems.map((item) => (
+                  <ItemCard key={item.id} {...item} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No lost items found</p>
+                <Button asChild>
+                  <Link to={user ? "/post-item" : "/login"}>Post a Lost Item</Link>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Found Items */}
@@ -152,11 +137,30 @@ const Home = () => {
               </Button>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {foundItems.map((item) => (
-                <ItemCard key={item.id} {...item} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-muted h-48 rounded-lg mb-4"></div>
+                    <div className="bg-muted h-4 rounded mb-2"></div>
+                    <div className="bg-muted h-4 rounded w-2/3"></div>
+                  </div>
+                ))}
+              </div>
+            ) : foundItems.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {foundItems.map((item) => (
+                  <ItemCard key={item.id} {...item} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No found items available</p>
+                <Button asChild>
+                  <Link to={user ? "/post-item" : "/login"}>Post a Found Item</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </section>
